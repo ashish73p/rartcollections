@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Palette } from 'lucide-react';
+import { Palette, Plus } from 'lucide-react';
 
 interface HeaderProps {
   onUploadClick: () => void;
@@ -7,7 +7,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onUploadClick }) => {
   return (
-    <header className="sticky top-0 z-50 bg-stone-50/90 backdrop-blur-md border-b border-stone-200">
+    <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-white/20 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center gap-3">
@@ -16,18 +16,18 @@ const Header: React.FC<HeaderProps> = ({ onUploadClick }) => {
             </div>
             <div>
               <h1 className="text-2xl font-semibold tracking-wider text-stone-900">
-                test<span className="font-light">artcollection</span>
+                Art<span className="font-light">Collection</span>
               </h1>
-              <p className="text-xs text-stone-500 uppercase tracking-widest hidden sm:block">Curated Digital Portfolio</p>
+              <p className="text-xs text-stone-600 uppercase tracking-widest hidden sm:block">Curated Digital Portfolio</p>
             </div>
           </div>
           
-          <button
+          <button 
             onClick={onUploadClick}
-            className="group flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-full hover:bg-stone-800 transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95"
+            className="flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white px-4 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
           >
-            <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-            <span>Add Artwork</span>
+            <Plus size={18} />
+            <span className="font-medium text-sm">Add Artwork</span>
           </button>
         </div>
       </div>
