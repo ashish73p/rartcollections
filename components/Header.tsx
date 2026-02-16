@@ -1,11 +1,7 @@
 import React from 'react';
-import { Palette, Plus } from 'lucide-react';
+import { Palette } from 'lucide-react';
 
-interface HeaderProps {
-  onUploadClick: () => void;
-}
-
-const Header: React.FC<HeaderProps> = ({ onUploadClick }) => {
+const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-white/20 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,14 +17,6 @@ const Header: React.FC<HeaderProps> = ({ onUploadClick }) => {
               <p className="text-xs text-stone-600 uppercase tracking-widest hidden sm:block">Curated Digital Portfolio</p>
             </div>
           </div>
-          
-          <button 
-            onClick={onUploadClick}
-            className="flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white px-4 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-          >
-            <Plus size={18} />
-            <span className="font-medium text-sm">Add Artwork</span>
-          </button>
         </div>
       </div>
     </header>

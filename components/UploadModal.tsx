@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { X, Upload, Loader2, Sparkles, Check, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { X, Upload, Loader2, Sparkles, Image as ImageIcon, Clipboard } from 'lucide-react';
 import { analyzeArtworkImage } from '../services/geminiService';
 import { Artwork } from '../types';
 
@@ -44,11 +44,40 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComp
 
       onUploadComplete(newArtwork);
       setIsAnalyzing(false);
-      setPreview(null); // Reset for next time but wait for modal to close in parent usually or just reset here
+      setPreview(null);
       onClose();
     };
     reader.readAsDataURL(file);
   }, [onUploadComplete, onClose]);
+
+  // Handle paste events (Ctrl+V)
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!isOpen || isAnalyzing) return;
+      
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile();
+          if (blob) {
+            handleFile(blob);
+            break; // Only take the first image
+          }
+        }
+      }
+    };
+
+    // Attach to document so it works anywhere when modal is open
+    if (isOpen) {
+      document.addEventListener('paste', handlePaste);
+    }
+    
+    return () => {
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [isOpen, isAnalyzing, handleFile]);
 
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -118,7 +147,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComp
               onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`
-                border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-300
+                border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-300 relative group
                 ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-stone-300 hover:border-stone-400 hover:bg-stone-50'}
               `}
             >
@@ -134,8 +163,12 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComp
                 <ImageIcon size={32} />
               </div>
               
-              <p className="text-stone-700 font-medium mb-1">Click to upload or drag and drop</p>
-              <p className="text-stone-400 text-xs">High resolution JPG, PNG or WebP</p>
+              <p className="text-stone-700 font-medium mb-1">Click to upload, drag & drop</p>
+              <div className="flex items-center justify-center gap-2 text-stone-400 text-sm mt-2">
+                 <Clipboard size={14} />
+                 <span>or paste image (Ctrl+V)</span>
+              </div>
+              <p className="text-stone-400 text-xs mt-4">High resolution JPG, PNG or WebP</p>
             </div>
           )}
         </div>
