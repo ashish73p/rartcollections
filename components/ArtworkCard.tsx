@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
-import { ArrowRight } from 'lucide-react';
 import { Artwork } from '../types';
 
 interface ArtworkCardProps {
   artwork: Artwork;
-  //onClick: (artwork: Artwork) => void;
 }
 
-const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onClick }) => {
+const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork }) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   return (
     <div 
-      className="group relative flex flex-row bg-white rounded-xl border border-stone-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden h-64 sm:h-72"
-      onClick={() => onClick(artwork)}
+      className="group relative flex flex-row bg-white rounded-xl border border-stone-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden h-64 sm:h-72"
     >
       {/* Image Side */}
       <div className="w-2/5 relative bg-stone-200 overflow-hidden">
@@ -36,11 +33,6 @@ const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onClick }) => {
             <p className="text-stone-500 text-sm leading-relaxed line-clamp-3 sm:line-clamp-4 font-light">
             {artwork.description}
             </p>
-        </div>
-
-        <div className="mt-4 flex items-center gap-2 text-stone-400 text-xs font-medium group-hover:text-indigo-600 transition-colors">
-            <span>View Details</span>
-            <ArrowRight size={14} className="transform group-hover:translate-x-1 transition-transform" />
         </div>
       </div>
     </div>
