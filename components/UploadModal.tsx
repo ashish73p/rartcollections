@@ -9,14 +9,28 @@ interface UploadModalProps {
   onUploadComplete: (artwork: Artwork) => void;
 }
 
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComplete }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(async (file: File) => {
-    if (!file.type.startsWith('image/')) return;
+    setError(null);
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setError('Unsupported file type. Please upload a JPG, PNG, WebP or GIF image.');
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setError('Image is too large. Maximum allowed size is 10 MB.');
+      return;
+    }
 
     // Create preview
     const reader = new FileReader();
@@ -168,8 +182,12 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComp
                  <Clipboard size={14} />
                  <span>or paste image (Ctrl+V)</span>
               </div>
-              <p className="text-stone-400 text-xs mt-4">High resolution JPG, PNG or WebP</p>
+              <p className="text-stone-400 text-xs mt-4">JPG, PNG, WebP or GIF · max 10 MB</p>
             </div>
+          )}
+
+          {error && !isAnalyzing && (
+            <p className="mt-4 text-sm text-red-600 text-center" role="alert">{error}</p>
           )}
         </div>
         
