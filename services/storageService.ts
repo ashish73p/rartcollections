@@ -1,4 +1,5 @@
 import { Artwork } from '../types';
+import { sortArtworksByNewest } from '../utils';
 
 const DB_NAME = 'ArtCollectionDB';
 const STORE_NAME = 'artworks';
@@ -22,16 +23,26 @@ const openDB = (): Promise<IDBDatabase> => {
   });
 };
 
+const promisifyRequest = <T>(request: IDBRequest<T>): Promise<T> => {
+  return new Promise((resolve, reject) => {
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+};
+
+const withStore = async <T>(
+  mode: IDBTransactionMode,
+  action: (store: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> => {
+  const db = await openDB();
+  const transaction = db.transaction(STORE_NAME, mode);
+  const store = transaction.objectStore(STORE_NAME);
+  return promisifyRequest(action(store));
+};
+
 export const saveArtworkToStorage = async (artwork: Artwork): Promise<void> => {
   try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.put(artwork);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve();
-    });
+    await withStore('readwrite', (store) => store.put(artwork));
   } catch (error) {
     console.error("Failed to save artwork to storage:", error);
     throw error;
@@ -40,19 +51,9 @@ export const saveArtworkToStorage = async (artwork: Artwork): Promise<void> => {
 
 export const getAllArtworksFromStorage = async (): Promise<Artwork[]> => {
   try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.getAll();
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => {
-        const results = request.result as Artwork[];
-        // Sort by dateAdded descending (newest first)
-        results.sort((a, b) => b.dateAdded - a.dateAdded);
-        resolve(results);
-      };
-    });
+    const results = await withStore<Artwork[]>('readonly', (store) => store.getAll());
+    // Sort by dateAdded descending (newest first)
+    return sortArtworksByNewest(results);
   } catch (error) {
     console.error("Failed to get artworks from storage:", error);
     return [];

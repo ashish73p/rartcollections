@@ -5,14 +5,14 @@ import ImageViewer from './components/ImageViewer';
 import UploadModal from './components/UploadModal';
 import { Artwork } from './types';
 import { getAllArtworksFromStorage, saveArtworkToStorage } from './services/storageService';
-
-const BASE_IMAGE_URL = "https://raw.githubusercontent.com/ashish73p/rartcollections/main/Images";
+import { imageUrl } from './constants';
+import { sortArtworksByNewest } from './utils';
 
 // Extended collection of default artworks
 const DEFAULT_ARTWORKS: Artwork[] = [
   {
     id: 'initial-1', 
-    url: `${BASE_IMAGE_URL}/Collection1.jpg`,
+    url: imageUrl('Collection1.jpg'),
     title: 'Chromatic Resonance',
     description: 'An immersive study of color dynamics, where vibrant hues interact to create a visual symphony that resonates with the viewer\'s emotions.',
     medium: 'Mixed Media on Canvas',
@@ -22,7 +22,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'initial-2', 
-    url: `${BASE_IMAGE_URL}/Collection2.jpeg`,
+    url: imageUrl('Collection2.jpeg'),
     title: 'Silent Narratives',
     description: 'A compelling composition that hints at untold stories, using texture and contrast to invite the observer into a deeper dialogue with the artwork.',
     medium: 'Oil on Canvas',
@@ -32,7 +32,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'art-3',
-    url: `${BASE_IMAGE_URL}/Collection3.jpeg`,
+    url: imageUrl('Collection3.jpeg'),
     title: 'Ephemeral Horizons',
     description: 'Capturing the fleeting moment where earth meets sky, this piece explores the boundaries of perception through light and shadow.',
     medium: 'Acrylic on Panel',
@@ -42,7 +42,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'art-4',
-    url: `${BASE_IMAGE_URL}/Collection4.jpeg`,
+    url: imageUrl('Collection4.jpeg'),
     title: 'Urban Rhythms',
     description: 'A chaotic yet structured interpretation of city life, reflecting the energy and pulse of the modern metropolis.',
     medium: 'Digital Illustration',
@@ -52,7 +52,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'art-5',
-    url: `${BASE_IMAGE_URL}/Collection5.jpeg`,
+    url: imageUrl('Collection5.jpeg'),
     title: 'Serene Solitude',
     description: 'A minimalist approach to form and space, evoking a sense of calm and introspection in the viewer.',
     medium: 'Watercolor',
@@ -62,7 +62,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'art-6',
-    url: `${BASE_IMAGE_URL}/Collection6.jpeg`,
+    url: imageUrl('Collection6.jpeg'),
     title: 'Fragments of Memory',
     description: 'Layered textures and fragmented imagery come together to represent the complex and often abstract nature of human memory.',
     medium: 'Collage',
@@ -72,7 +72,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'art-7',
-    url: `${BASE_IMAGE_URL}/Collection7.jpeg`,
+    url: imageUrl('Collection7.jpeg'),
     title: 'Nature\'s Geometry',
     description: 'Finding the mathematical perfection in organic forms, this piece highlights the hidden patterns found in the natural world.',
     medium: 'Ink on Paper',
@@ -82,7 +82,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'art-8',
-    url: `${BASE_IMAGE_URL}/Collection8.jpeg`,
+    url: imageUrl('Collection8.jpeg'),
     title: 'Midnight Reverie',
     description: 'Dark tones and subtle highlights create a dreamlike atmosphere, exploring themes of the subconscious and the night.',
     medium: 'Oil on Canvas',
@@ -92,7 +92,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'art-9',
-    url: `${BASE_IMAGE_URL}/Collection9.jpeg`,
+    url: imageUrl('Collection9.jpeg'),
     title: 'Vivid Awakening',
     description: 'A burst of energy and life, utilizing bold strokes and bright colors to signify a new beginning or realization.',
     medium: 'Acrylic',
@@ -102,7 +102,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'art-10',
-    url: `${BASE_IMAGE_URL}/Collection10.jpeg`,
+    url: imageUrl('Collection10.jpeg'),
     title: 'Structural Integrity',
     description: 'An architectural study focusing on lines, angles, and the interplay of light on solid structures.',
     medium: 'Charcoal',
@@ -112,7 +112,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'art-11',
-    url: `${BASE_IMAGE_URL}/Collection11.jpeg`,
+    url: imageUrl('Collection11.jpeg'),
     title: 'Fluid Motion',
     description: 'Capturing the essence of movement without a defined form, suggesting the flow of water or wind.',
     medium: 'Alcohol Ink',
@@ -122,7 +122,7 @@ const DEFAULT_ARTWORKS: Artwork[] = [
   },
   {
     id: 'art-12',
-    url: `${BASE_IMAGE_URL}/Collection12.jpeg`,
+    url: imageUrl('Collection12.jpeg'),
     title: 'Timeless Gaze',
     description: 'A portrait that looks beyond the present, capturing a universal human expression that transcends time.',
     medium: 'Oil',
@@ -165,8 +165,7 @@ const App: React.FC = () => {
         }
 
         // Sort by date added (newest first)
-        finalArtworks.sort((a, b) => b.dateAdded - a.dateAdded);
-        setArtworks(finalArtworks);
+        setArtworks(sortArtworksByNewest(finalArtworks));
 
       } catch (error) {
         console.error("Failed to load artworks:", error);
@@ -200,7 +199,7 @@ const App: React.FC = () => {
                <div className="relative group">
                  <div className="absolute inset-0 bg-stone-200 rounded-lg transform rotate-3 translate-y-2 group-hover:rotate-6 transition-transform"></div>
                  <img 
-                   src="https://raw.githubusercontent.com/ashish73p/rartcollections/main/Images/RadhaAward.jpeg" 
+                   src={imageUrl('RadhaAward.jpeg')} 
                    alt="Radha Award"
                    className="relative w-64 h-auto rounded-lg shadow-xl border-4 border-white object-cover"
                  />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Calendar, Tag, PenTool } from 'lucide-react';
 import { Artwork } from '../types';
+import Modal from './Modal';
 
 interface ImageViewerProps {
   artwork: Artwork | null;
@@ -11,12 +12,11 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ artwork, onClose }) => {
   if (!artwork) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4">
-      <div 
-        className="absolute inset-0 bg-stone-900/90 backdrop-blur-md transition-opacity"
-        onClick={onClose}
-      ></div>
-
+    <Modal
+      onBackdropClick={onClose}
+      className="z-[100] p-0 sm:p-4"
+      backdropClassName="bg-stone-900/90 backdrop-blur-md"
+    >
       <div className="relative bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-6xl rounded-none sm:rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-300">
         
         <button 
@@ -77,7 +77,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ artwork, onClose }) => {
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 
