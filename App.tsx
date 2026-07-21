@@ -136,55 +136,79 @@ const App: React.FC = () => {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   // Initialize with persisted data or defaults
   useEffect(() => {
     const loadArtworks = async () => {
+      setLoadError(null);
+
+      let storedArtworks: Artwork[] = [];
+      let readFailed = false;
       try {
-        const storedArtworks = await getAllArtworksFromStorage();
-        let finalArtworks = [...storedArtworks];
-        
-        // Merge defaults if they are missing
-        for (const defaultArt of DEFAULT_ARTWORKS) {
-            // Check by ID or roughly by Title/URL if IDs changed in dev
-            const exists = finalArtworks.some(art => art.id === defaultArt.id || art.url === defaultArt.url);
-            
-            if (!exists) {
-                finalArtworks.push(defaultArt);
-                // Save asynchronously to DB
-                await saveArtworkToStorage(defaultArt);
-            } else {
-              // Ensure URL is up to date (fix for previous hardcoded vars if needed)
-              const existingIndex = finalArtworks.findIndex(art => art.id === defaultArt.id);
-              if (existingIndex !== -1 && finalArtworks[existingIndex].url !== defaultArt.url) {
-                finalArtworks[existingIndex] = { ...finalArtworks[existingIndex], url: defaultArt.url };
-                await saveArtworkToStorage(finalArtworks[existingIndex]);
-              }
-            }
-        }
-
-        // Sort by date added (newest first)
-        finalArtworks.sort((a, b) => b.dateAdded - a.dateAdded);
-        setArtworks(finalArtworks);
-
+        storedArtworks = await getAllArtworksFromStorage();
       } catch (error) {
-        console.error("Failed to load artworks:", error);
-      } finally {
-        setIsLoading(false);
+        // A storage read failure should not leave the gallery blank: fall back
+        // to the bundled defaults, but tell the user persistence is degraded.
+        console.error("Failed to load artworks from storage:", error);
+        readFailed = true;
       }
+
+      const finalArtworks = [...storedArtworks];
+      let seedFailed = false;
+
+      // Merge defaults if they are missing
+      for (const defaultArt of DEFAULT_ARTWORKS) {
+        // Check by ID or roughly by Title/URL if IDs changed in dev
+        const exists = finalArtworks.some(art => art.id === defaultArt.id || art.url === defaultArt.url);
+
+        if (!exists) {
+          finalArtworks.push(defaultArt);
+          // Persist the seed, but a failure here must not prevent the artwork
+          // from being displayed.
+          try {
+            await saveArtworkToStorage(defaultArt);
+          } catch (error) {
+            console.error(`Failed to persist default artwork "${defaultArt.id}":`, error);
+            seedFailed = true;
+          }
+        } else {
+          // Ensure URL is up to date (fix for previous hardcoded vars if needed)
+          const existingIndex = finalArtworks.findIndex(art => art.id === defaultArt.id);
+          if (existingIndex !== -1 && finalArtworks[existingIndex].url !== defaultArt.url) {
+            finalArtworks[existingIndex] = { ...finalArtworks[existingIndex], url: defaultArt.url };
+            try {
+              await saveArtworkToStorage(finalArtworks[existingIndex]);
+            } catch (error) {
+              console.error(`Failed to update default artwork "${defaultArt.id}":`, error);
+              seedFailed = true;
+            }
+          }
+        }
+      }
+
+      // Sort by date added (newest first)
+      finalArtworks.sort((a, b) => b.dateAdded - a.dateAdded);
+      setArtworks(finalArtworks);
+
+      if (readFailed) {
+        setLoadError("Couldn't read your saved collection, so defaults are shown. Changes may not be saved.");
+      } else if (seedFailed) {
+        setLoadError("Couldn't save some default artworks. They're shown but may not persist.");
+      }
+
+      setIsLoading(false);
     };
-    
+
     loadArtworks();
   }, []);
 
   const handleUploadComplete = async (newArtwork: Artwork) => {
-    try {
-      await saveArtworkToStorage(newArtwork);
-      setArtworks(prev => [newArtwork, ...prev]);
-    } catch (error) {
-      console.error("Failed to save uploaded artwork:", error);
-    }
+    // Persist first so the caller can surface a failure; only update the UI
+    // once the artwork is safely stored.
+    await saveArtworkToStorage(newArtwork);
+    setArtworks(prev => [newArtwork, ...prev]);
   };
 
   return (
@@ -218,6 +242,15 @@ const App: React.FC = () => {
                 </p>
              </div>
           </div>
+
+          {loadError && (
+            <div
+              role="alert"
+              className="mb-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+            >
+              {loadError}
+            </div>
+          )}
 
           {/* Grid Layout for Horizontal Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

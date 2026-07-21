@@ -1,32 +1,55 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { X, Upload, Loader2, Sparkles, Image as ImageIcon, Clipboard } from 'lucide-react';
+import { X, Upload, Loader2, Sparkles, Image as ImageIcon, Clipboard, AlertCircle } from 'lucide-react';
 import { analyzeArtworkImage } from '../services/geminiService';
 import { Artwork } from '../types';
 
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUploadComplete: (artwork: Artwork) => void;
+  onUploadComplete: (artwork: Artwork) => void | Promise<void>;
 }
 
 const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComplete }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = useCallback(async (file: File) => {
-    if (!file.type.startsWith('image/')) return;
+  const readFileAsDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result;
+        if (typeof result === 'string') {
+          resolve(result);
+        } else {
+          reject(new Error("Could not read the selected file."));
+        }
+      };
+      reader.onerror = () => reject(reader.error ?? new Error("Failed to read the selected file."));
+      reader.onabort = () => reject(new Error("Reading the selected file was aborted."));
+      reader.readAsDataURL(file);
+    });
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const result = e.target?.result as string;
+  const handleFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setError("That file isn't a supported image. Please choose a JPG, PNG, or WebP.");
+      return;
+    }
+
+    setError(null);
+    setIsAnalyzing(true);
+
+    try {
+      const result = await readFileAsDataUrl(file);
       setPreview(result);
-      setIsAnalyzing(true);
 
       // Extract base64 data for API
       const base64Data = result.split(',')[1];
+      if (!base64Data) {
+        throw new Error("The selected image appears to be empty or corrupted.");
+      }
       const mimeType = file.type;
 
       // Analyze with Gemini
@@ -42,13 +65,27 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComp
         dateAdded: Date.now()
       };
 
-      onUploadComplete(newArtwork);
+      await onUploadComplete(newArtwork);
       setIsAnalyzing(false);
       setPreview(null);
       onClose();
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      // Reset the analyzing state so the modal never gets stuck, and surface
+      // the failure to the user instead of swallowing it.
+      console.error("Failed to add artwork:", err);
+      setIsAnalyzing(false);
+      setError(err instanceof Error ? err.message : "Something went wrong while adding the artwork.");
+    }
   }, [onUploadComplete, onClose]);
+
+  // Reset transient state whenever the modal is opened.
+  useEffect(() => {
+    if (isOpen) {
+      setError(null);
+      setPreview(null);
+      setIsAnalyzing(false);
+    }
+  }, [isOpen]);
 
   // Handle paste events (Ctrl+V)
   useEffect(() => {
@@ -154,7 +191,12 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComp
               <input 
                 type="file" 
                 ref={fileInputRef} 
-                onChange={(e) => e.target.files && handleFile(e.target.files[0])} 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  // Allow re-selecting the same file (e.g. after an error).
+                  e.target.value = '';
+                  if (file) handleFile(file);
+                }} 
                 className="hidden" 
                 accept="image/*"
               />
@@ -169,6 +211,16 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComp
                  <span>or paste image (Ctrl+V)</span>
               </div>
               <p className="text-stone-400 text-xs mt-4">High resolution JPG, PNG or WebP</p>
+            </div>
+          )}
+
+          {error && !isAnalyzing && (
+            <div
+              role="alert"
+              className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
         </div>
