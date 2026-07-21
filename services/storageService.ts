@@ -55,6 +55,6 @@ export const getAllArtworksFromStorage = async (): Promise<Artwork[]> => {
     });
   } catch (error) {
     console.error("Failed to get artworks from storage:", error);
-    return [];
+    throw error;
   }
 };

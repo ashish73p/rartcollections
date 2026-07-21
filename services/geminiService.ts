@@ -51,18 +51,21 @@ export const analyzeArtworkImage = async (base64Data: string, mimeType: string):
     });
 
     const text = response.text;
-    if (!text) throw new Error("No response from Gemini");
-    
-    return JSON.parse(text) as ArtworkAnalysisResponse;
+    if (!text) throw new Error("Gemini returned an empty response.");
+
+    try {
+      return JSON.parse(text) as ArtworkAnalysisResponse;
+    } catch (parseError) {
+      throw new Error("Gemini returned a response that could not be parsed as JSON.", { cause: parseError });
+    }
 
   } catch (error) {
+    // Surface the failure to the caller instead of silently substituting
+    // fabricated metadata, which would otherwise be saved without the user's
+    // knowledge.
     console.error("Gemini analysis failed:", error);
-    // Fallback if AI fails
-    return {
-      title: "New Acquisition",
-      description: "A beautiful piece of art uploaded to the collection.",
-      medium: "Mixed Media",
-      tags: ["Art", "New"]
-    };
+    throw error instanceof Error
+      ? error
+      : new Error("Gemini analysis failed.", { cause: error });
   }
 };
