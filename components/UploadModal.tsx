@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Upload, Loader2, Sparkles, Image as ImageIcon, Clipboard } from 'lucide-react';
 import { analyzeArtworkImage } from '../services/geminiService';
 import { Artwork } from '../types';
+import Modal from './Modal';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -100,12 +101,11 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm transition-opacity"
-        onClick={!isAnalyzing ? onClose : undefined}
-      ></div>
-      
+    <Modal
+      onBackdropClick={!isAnalyzing ? onClose : undefined}
+      className="z-50 p-4"
+      backdropClassName="bg-stone-900/40 backdrop-blur-sm"
+    >
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-100">
         <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50">
           <h2 className="text-xl font-serif text-stone-800 flex items-center gap-2">
@@ -182,7 +182,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUploadComp
             </div>
         )}
       </div>
-    </div>
+    </Modal>
   );
 };
 
